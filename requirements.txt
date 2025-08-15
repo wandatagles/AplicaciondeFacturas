@@ -1,1 +1,12 @@
 PySide6>=6.5
+requests>=2.31.0
+python-dotenv>=1.0.0
+pydantic>=2.6.0
+pandas>=2.2.0
+openpyxl>=3.1.2
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-openai>=0.1.0
+crewai>=0.30.0
+unstract-llmwhisperer-client>=0.2.0  # asumiendo nombre del paquete
+tenacity>=8.2.3

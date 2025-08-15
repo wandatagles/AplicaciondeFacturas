@@ -8,6 +8,13 @@ from PySide6.QtGui import QKeySequence, QPixmap, QAction, QIcon
 from PySide6.QtCore import Qt, QSize
 import os
 from .theme import theme_manager
+from pathlib import Path
+from typing import List
+try:
+	from src.extraction.pipeline import InvoiceExtractionPipeline
+	_PIPE_OK = True
+except Exception:  # pragma: no cover
+	_PIPE_OK = False
 
 class MainWindow(QMainWindow):
 	def __init__(self):
@@ -171,7 +178,21 @@ class MainWindow(QMainWindow):
 			self.preview_widget.setText("Previsualización no implementada")
 
 	def on_extraer_tablas(self):
-		QMessageBox.information(self, "Extraer tablas", "Función no implementada.")
+		if not self.pdf_files:
+			QMessageBox.information(self, "Extracción", "No hay PDFs cargados.")
+			return
+		if not _PIPE_OK:
+			QMessageBox.warning(self, "Extracción", "Pipeline no disponible (dependencias faltantes).")
+			return
+		from src.extraction.pipeline import InvoiceExtractionPipeline
+		pipeline = InvoiceExtractionPipeline()
+		paths = [Path(p) for p in self.pdf_files]
+		result = pipeline.extract_batch(paths)
+		rows = len(result.rows)
+		msg = f"Extracción simulada completada. Filas: {rows}"
+		if result.warnings:
+			msg += "\nWarnings:\n- " + "\n- ".join(result.warnings)
+		QMessageBox.information(self, "Extracción", msg)
 
 	def on_exportar_excel(self):
 		QMessageBox.information(self, "Exportar a Excel", "Función no implementada.")
