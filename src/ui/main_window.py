@@ -1,94 +1,27 @@
 
 from PySide6.QtWidgets import (
 	QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
-	QFileDialog, QListWidget, QSplitter, QStatusBar, QProgressBar, QToolBar, QMessageBox
+	QFileDialog, QListWidget, QSplitter, QStatusBar, QProgressBar, QMessageBox,
+	QToolBar, QMenu, QMenuBar
 )
-from PySide6.QtGui import QIcon, QKeySequence, QPixmap, QAction
+from PySide6.QtGui import QKeySequence, QPixmap, QAction, QIcon
 from PySide6.QtCore import Qt, QSize
 import os
-
-
-# Ventana principal de la aplicación
-from PySide6.QtWidgets import (
-	QMainWindow, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout,
-	QFileDialog, QListWidget, QSplitter, QStatusBar, QProgressBar, QMessageBox
-)
-from PySide6.QtGui import QKeySequence, QPixmap
-from PySide6.QtCore import Qt
-import os
+from .theme import theme_manager
 
 class MainWindow(QMainWindow):
 	def __init__(self):
 		super().__init__()
-		self.setWindowTitle("Facturas – Fundación Ciudad del Saber")
-		self.setMinimumSize(900, 600)
+		self.setWindowTitle("FACTUYA – Fundación Ciudad del Saber")
+		self.setMinimumSize(1080, 680)
 
 		self.pdf_files = []
 
 		central_widget = QWidget()
 		main_layout = QVBoxLayout(central_widget)
 
-		self.setStyleSheet("""
-			QMainWindow {
-				background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-					stop:0 #f5f7fa, stop:1 #c3cfe2);
-			}
-			QLabel#titleLabel {
-				font-size: 2em;
-				font-weight: bold;
-				color: #2c3e50;
-				margin-left: 12px;
-			}
-			QLabel#logoLabel {
-				border-radius: 8px;
-				background: #e0e7ef;
-				border: 1px solid #b0b8c1;
-			}
-			QPushButton {
-				background-color: #2980b9;
-				color: white;
-				border-radius: 6px;
-				padding: 8px 18px;
-				font-size: 1em;
-				font-weight: 500;
-				margin-right: 8px;
-			}
-			QPushButton:hover {
-				background-color: #3498db;
-			}
-			QPushButton:pressed {
-				background-color: #1c5a85;
-			}
-			QListWidget {
-				background: #f8fafc;
-				border: 1px solid #b0b8c1;
-				border-radius: 6px;
-				font-size: 1em;
-			}
-			QStatusBar {
-				background: #e0e7ef;
-				color: #2c3e50;
-				font-weight: 500;
-				border-top: 1px solid #b0b8c1;
-			}
-			QProgressBar {
-				border-radius: 6px;
-				background: #f5f7fa;
-				height: 18px;
-			}
-			QProgressBar::chunk {
-				background-color: #2980b9;
-				border-radius: 6px;
-			}
-			QLabel#previewLabel {
-				background: #f8fafc;
-				border: 1px dashed #b0b8c1;
-				border-radius: 8px;
-				color: #7f8c8d;
-				font-size: 1.1em;
-				padding: 24px;
-			}
-		""")
+		# Aplicar tema inicial (claro)
+		theme_manager().apply('light')
 
 
 		# Encabezado con logo y títulos estilizados
@@ -124,24 +57,50 @@ class MainWindow(QMainWindow):
 		header_layout.addStretch()
 		main_layout.addLayout(header_layout)
 
-		# Zona superior: botones y label de archivos
-		top_layout = QHBoxLayout()
-		self.btn_cargar_pdf = QPushButton("Cargar PDF…")
-		self.btn_cargar_pdf.setToolTip("Selecciona un archivo PDF")
-		self.btn_cargar_pdf.setShortcut(QKeySequence("Ctrl+O"))
-		self.btn_cargar_pdf.clicked.connect(self.on_cargar_pdf)
-		top_layout.addWidget(self.btn_cargar_pdf)
+		# Toolbar moderna
+		toolbar = QToolBar("Acciones")
+		toolbar.setIconSize(QSize(20,20))
+		self.addToolBar(Qt.TopToolBarArea, toolbar)
 
-		self.btn_importar_carpeta = QPushButton("Importar carpeta…")
-		self.btn_importar_carpeta.setToolTip("Importa todos los PDFs de una carpeta")
-		self.btn_importar_carpeta.setShortcut(QKeySequence("Ctrl+Shift+O"))
-		self.btn_importar_carpeta.clicked.connect(self.on_importar_carpeta)
-		top_layout.addWidget(self.btn_importar_carpeta)
+		a_cargar = QAction(QIcon.fromTheme("document-open"), "Cargar PDF…", self)
+		a_cargar.setShortcut(QKeySequence("Ctrl+O"))
+		a_cargar.setToolTip("Selecciona un archivo PDF")
+		a_cargar.triggered.connect(self.on_cargar_pdf)
+		toolbar.addAction(a_cargar)
+
+		a_carpeta = QAction(QIcon.fromTheme("folder-open"), "Importar carpeta…", self)
+		a_carpeta.setShortcut(QKeySequence("Ctrl+Shift+O"))
+		a_carpeta.setToolTip("Importa todos los PDFs de una carpeta")
+		a_carpeta.triggered.connect(self.on_importar_carpeta)
+		toolbar.addAction(a_carpeta)
+
+		toolbar.addSeparator()
+
+		a_extraer = QAction(QIcon.fromTheme("edit-copy"), "Extraer tablas", self)
+		a_extraer.setShortcut(QKeySequence("Ctrl+T"))
+		a_extraer.triggered.connect(self.on_extraer_tablas)
+		toolbar.addAction(a_extraer)
+
+		a_exportar = QAction(QIcon.fromTheme("document-save"), "Exportar a Excel", self)
+		a_exportar.setShortcut(QKeySequence("Ctrl+E"))
+		a_exportar.triggered.connect(self.on_exportar_excel)
+		toolbar.addAction(a_exportar)
+
+		a_limpiar = QAction(QIcon.fromTheme("edit-delete"), "Limpiar información", self)
+		a_limpiar.setShortcut(QKeySequence("Ctrl+L"))
+		a_limpiar.triggered.connect(self.on_limpiar_informacion)
+		toolbar.addAction(a_limpiar)
+
+		toolbar.addSeparator()
+		a_tema = QAction(QIcon.fromTheme("preferences-desktop-theme"), "Alternar tema", self)
+		a_tema.setShortcut(QKeySequence("Ctrl+Shift+T"))
+		a_tema.triggered.connect(lambda: theme_manager().toggle())
+		toolbar.addAction(a_tema)
 
 		self.label_archivos = QLabel("0 archivos cargados")
-		top_layout.addWidget(self.label_archivos)
-		top_layout.addStretch()
-		main_layout.addLayout(top_layout)
+		self.label_archivos.setObjectName("labelArchivos")
+		toolbar.addSeparator()
+		toolbar.addWidget(self.label_archivos)
 
 		# Splitter central: lista de archivos y previsualización
 		splitter = QSplitter(Qt.Horizontal)
@@ -157,28 +116,7 @@ class MainWindow(QMainWindow):
 		splitter.setSizes([300, 600])
 		main_layout.addWidget(splitter)
 
-		# Barra de acciones (debajo del splitter)
-		actions_layout = QHBoxLayout()
-		self.btn_extraer_tablas = QPushButton("Extraer tablas")
-		self.btn_extraer_tablas.setToolTip("Extrae las tablas de los PDFs")
-		self.btn_extraer_tablas.setShortcut(QKeySequence("Ctrl+T"))
-		self.btn_extraer_tablas.clicked.connect(self.on_extraer_tablas)
-		actions_layout.addWidget(self.btn_extraer_tablas)
-
-		self.btn_exportar_excel = QPushButton("Exportar a Excel")
-		self.btn_exportar_excel.setToolTip("Exporta los datos a un archivo Excel")
-		self.btn_exportar_excel.setShortcut(QKeySequence("Ctrl+E"))
-		self.btn_exportar_excel.clicked.connect(self.on_exportar_excel)
-		actions_layout.addWidget(self.btn_exportar_excel)
-
-		self.btn_limpiar_info = QPushButton("Limpiar información")
-		self.btn_limpiar_info.setToolTip("Limpia la lista y la previsualización")
-		self.btn_limpiar_info.setShortcut(QKeySequence("Ctrl+L"))
-		self.btn_limpiar_info.clicked.connect(self.on_limpiar_informacion)
-		actions_layout.addWidget(self.btn_limpiar_info)
-
-		actions_layout.addStretch()
-		main_layout.addLayout(actions_layout)
+		# (Acciones movidas a la toolbar para diseño moderno)
 
 		# Barra de estado y ProgressBar
 		self.status_bar = QStatusBar()
