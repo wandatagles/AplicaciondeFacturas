@@ -8,5 +8,6 @@ langchain>=0.2.0
 langchain-community>=0.2.0
 langchain-openai>=0.1.0
 crewai>=0.30.0
-unstract-llmwhisperer-client>=0.2.0  # asumiendo nombre del paquete
+# Paquete oficial LLMWhisperer no disponible en PyPI con este nombre; se implementa fallback HTTP
+httpx>=0.27.0
 tenacity>=8.2.3
